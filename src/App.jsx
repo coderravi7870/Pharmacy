@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import CustomSelect from "./utils/CustomSelect";
 
 function App() {
@@ -93,33 +93,12 @@ function App() {
     }
   };
 
-  // Handle investigation selection
-  const handleInvestigationChange = (type, investigation) => {
-    setSelectedInvestigations((prev) => {
-      const currentSelections = prev[type];
-      const isSelected = currentSelections.includes(investigation);
-
-      return {
-        ...prev,
-        [type]: isSelected
-          ? currentSelections.filter((item) => item !== investigation)
-          : [...currentSelections, investigation],
-      };
-    });
-  };
-
-  // Handle multi-select dropdown change for investigations
-  const handleInvestigationMultiChange = (type, e) => {
-    const values = Array.from(e.target.selectedOptions).map((o) => o.value);
-    setSelectedInvestigations((prev) => ({ ...prev, [type]: values }));
-  };
-
   // Handle medicine button click
   const handleMedicineButtonClick = () => {
-    console.log("🔵 Medicine button clicked!");
-    console.log("📋 Current form state:", formState);
-    console.log("💊 Current medicines:", medicines);
-    console.log("🔬 Selected investigations:", selectedInvestigations);
+    // console.log("🔵 Medicine button clicked!");
+    // console.log("📋 Current form state:", formState);
+    // console.log("💊 Current medicines:", medicines);
+    // console.log("🔬 Selected investigations:", selectedInvestigations);
 
     // Validate that form has required data
     if (!formState.patientName || !formState.admissionNumber) {
@@ -186,14 +165,6 @@ function App() {
   // Non-Package items list (like medicines): [{id, name, quantity}]
   const [nonPackageItems, setNonPackageItems] = useState([]);
 
-  const addPackageItem = () => {
-    setPackageItems((prev) => {
-      const nextId =
-        prev.length > 0 ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
-      return [...prev, { id: nextId, name: "", quantity: 1 }];
-    });
-  };
-
   const removePackageItem = (id) => {
     setPackageItems((prev) => prev.filter((p) => p.id !== id));
   };
@@ -225,14 +196,6 @@ function App() {
     setInvestigations(
       investigations.map((i) => (i.id === id ? { ...i, [field]: value } : i))
     );
-  };
-
-  const addNonPackageItem = () => {
-    setNonPackageItems((prev) => {
-      const nextId =
-        prev.length > 0 ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
-      return [...prev, { id: nextId, name: "", quantity: 1 }];
-    });
   };
 
   const removeNonPackageItem = (id) => {
@@ -514,179 +477,227 @@ function App() {
   // With this single state:
   const [pharmacyData, setPharmacyData] = useState({});
   const [masterData, setMasterData] = useState({});
-  
+
   const [selectedInvestigation, setSelectedInvestigation] = useState("");
 
   // Add these states for selected values
   const [selectedStaff, setSelectedStaff] = useState("");
-  const [selectedMedicine, setSelectedMedicine] = useState("");
   const [selectedConsultant, setSelectedConsultant] = useState("");
   const [selectedWardLocation, setSelectedWardLocation] = useState("");
   const [selectedAdmitionNumber, setSelectedAdmitionNumber] = useState("");
 
   const [staffSearch, setStaffSearch] = useState("");
   const [showStaffDropdown, setShowStaffDropdown] = useState(false);
-  const [brokerRateMap, setBrokerRateMap] = useState({});
-  const [filteredBrokers, setFilteredBrokers] = useState([]);
-  const [globalFilteredRates, setGlobalFilteredRates] = useState([]);
 
   const [pharmacyLoading, setPharmacyLoading] = useState(false);
+  const [pharmacyCurrentPage, setPharmacyCurrentPage] = useState(1);
+  const [pharmacyHasMore, setPharmacyHasMore] = useState(true);
+  const pharmacyPageSize = 1000; // Number of records per page
 
-  // const fetchPharmacySheet = async () => {
-  //   console.log("Ram");
+  const fetchPharmacySheet = useCallback(
+    async (page = 1) => {
+      console.log("Fetching pharmacy page:", page);
 
-  //   setPharmacyLoading(true);
-  //   try {
-  //     const response = await fetch(
-  //       `https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?sheet=Admission%20Data`
-  //     );
-  //     const result = await response.json();
+      setPharmacyLoading(true);
+      try {
+        const response = await fetch(
+          `https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?sheet=Admission%20Data&page=${page}&pageSize=${pharmacyPageSize}`
+        );
+        const result = await response.json();
 
-  //     console.log("result", result);
+        console.log("Pharmacy API Response:", result);
 
-  //     if (result.success && result.data && result.data.length > 0) {
-  //       const headers = result.data[0];
-  //       const structuredData = {};
+        if (result.success && result.data && result.data.length > 0) {
+          const headers = result.data[0];
+          const newData = {};
 
-  //       headers.forEach((header) => {
-  //         structuredData[header] = [];
-  //       });
+          // Initialize each header with empty array
+          headers.forEach((header) => {
+            newData[header] = [];
+          });
 
-  //       result.data.slice(1).forEach((row) => {
-  //         row.forEach((value, index) => {
-  //           const header = headers[index];
-  //           if (value !== null && value !== undefined) {
-  //             const stringValue = String(value).trim();
-  //             if (stringValue !== "") {
-  //               structuredData[header].push(stringValue);
-  //             }
-  //           }
-  //         });
-  //       });
+          // Process data rows (skip header row)
+          result.data.slice(1).forEach((row) => {
+            headers.forEach((header, index) => {
+              if (index < row.length) {
+                const value = row[index];
+                if (value !== null && value !== undefined) {
+                  const stringValue = String(value).trim();
+                  newData[header].push(stringValue);
+                } else {
+                  newData[header].push("");
+                }
+              } else {
+                // If the row doesn't have enough columns, push empty string
+                newData[header].push("");
+              }
+            });
+          });
 
-  //       // Remove duplicates from each array
-  //       Object.keys(structuredData).forEach((key) => {
-  //         structuredData[key] = [...new Set(structuredData[key])];
-  //       });
+          // Merge with existing data
+          setPharmacyData((prevData) => {
+            const mergedData = { ...prevData };
 
-  //       console.log("Structured Master Data:", structuredData);
-  //       setPharmacyData(structuredData);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching master data:", error);
-  //     // You might want to add toast.error("Failed to load master data"); if you have toast setup
-  //   } finally {
-  //     setPharmacyLoading(false);
-  //   }
-  // };
+            Object.keys(newData).forEach((key) => {
+              if (mergedData[key]) {
+                // Merge and remove duplicates
+                const combined = [...mergedData[key], ...newData[key]];
+                mergedData[key] = [...new Set(combined)];
+              } else {
+                mergedData[key] = newData[key];
+              }
+            });
 
+            return mergedData;
+          });
 
+          // Check if there's more data to load
+          setPharmacyHasMore(result.pagination?.hasMore || false);
+        }
+      } catch (error) {
+        console.error("Error fetching pharmacy data:", error);
+      } finally {
+        setPharmacyLoading(false);
+      }
+    },
+    [pharmacyPageSize]
+  );
 
-  const fetchPharmacySheet = async () => {
-  console.log("Ram");
+  // Load more pharmacy data when scrolling
+  const handlePharmacyScroll = useCallback(() => {
+    if (pharmacyLoading || !pharmacyHasMore) return;
 
-  setPharmacyLoading(true);
-  try {
-    const response = await fetch(
-      `https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?sheet=Admission%20Data`
-    );
-    const result = await response.json();
+    const scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    const scrollHeight =
+      document.documentElement.scrollHeight || document.body.scrollHeight;
+    const clientHeight =
+      document.documentElement.clientHeight || window.innerHeight;
 
-    console.log("result", result);
-
-    if (result.success && result.data && result.data.length > 0) {
-      const headers = result.data[0];
-      const structuredData = {};
-      const totalRows = result.data.length - 1; // Number of data rows (excluding header)
-
-      // Initialize each header with an empty array
-      headers.forEach((header) => {
-        structuredData[header] = [];
+    // Load more data when user is near the bottom
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      setPharmacyCurrentPage((prevPage) => {
+        const nextPage = prevPage + 1;
+        fetchPharmacySheet(nextPage);
+        return nextPage;
       });
-
-      // Process each row of data
-      result.data.slice(1).forEach((row) => {
-        headers.forEach((header, index) => {
-          if (index < row.length) {
-            const value = row[index];
-            if (value !== null && value !== undefined) {
-              const stringValue = String(value).trim();
-              structuredData[header].push(stringValue);
-            } else {
-              structuredData[header].push('');
-            }
-          } else {
-            // If the row doesn't have enough columns, push empty string
-            structuredData[header].push('');
-          }
-        });
-      });
-
-      console.log("Structured Pharmacy Data:", structuredData);
-      setPharmacyData(structuredData);
     }
-  } catch (error) {
-    console.error("Error fetching pharmacy data:", error);
-    // You might want to add toast.error("Failed to load pharmacy data"); if you have toast setup
-  } finally {
-    setPharmacyLoading(false);
-  }
-};
+  }, [pharmacyLoading, pharmacyHasMore, fetchPharmacySheet]);
 
+  // Initial pharmacy data load
+  useEffect(() => {
+    fetchPharmacySheet(1);
+  }, [fetchPharmacySheet]);
 
+  // Add scroll event listener for pharmacy data
+  useEffect(() => {
+    window.addEventListener("scroll", handlePharmacyScroll);
+    return () => window.removeEventListener("scroll", handlePharmacyScroll);
+  }, [handlePharmacyScroll]);
 
   const [ladingMaster, setLoadingMaster] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const pageSize = 1000; // Number of records per page
 
-  const fetchMasterSheet = async () => {
-    console.log("Ram");
+  const fetchMasterSheet = useCallback(
+    async (page = 1) => {
+      console.log("Fetching page:", page);
 
-    setLoadingMaster(true);
-    try {
-      const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbx_ffGXIZelQ3qCR_QuWT1hhQ3UZwjUjgl4Gnb3GpxcAHuUj206Kw3iGZV_qfCmmKk/exec?sheet=Pharmacy's%20Details`
-      );
-      const result = await response.json();
+      setLoadingMaster(true);
+      try {
+        const response = await fetch(
+          `https://script.google.com/macros/s/AKfycbx_ffGXIZelQ3qCR_QuWT1hhQ3UZwjUjgl4Gnb3GpxcAHuUj206Kw3iGZV_qfCmmKk/exec?sheet=Pharmacy's%20Details&page=${page}&pageSize=${pageSize}`
+        );
+        const result = await response.json();
 
-      console.log("result", result);
+        console.log("API Response:", result);
 
-      if (result.success && result.data && result.data.length > 0) {
-        const headers = result.data[0];
-        const structuredData = {};
+        if (result.success && result.data && result.data.length > 0) {
+          const headers = result.data[0];
+          const newData = {};
 
-        headers.forEach((header) => {
-          structuredData[header] = [];
-        });
-
-        result.data.slice(1).forEach((row) => {
-          row.forEach((value, index) => {
-            const header = headers[index];
-            if (value !== null && value !== undefined) {
-              const stringValue = String(value).trim();
-              if (stringValue !== "") {
-                structuredData[header].push(stringValue);
-              }
-            }
+          // Initialize each header with empty array
+          headers.forEach((header) => {
+            newData[header] = [];
           });
-        });
 
-        // Remove duplicates from each array
-        Object.keys(structuredData).forEach((key) => {
-          structuredData[key] = [...new Set(structuredData[key])];
-        });
+          // Process data rows (skip header row)
+          result.data.slice(1).forEach((row) => {
+            row.forEach((value, index) => {
+              const header = headers[index];
+              if (value !== null && value !== undefined) {
+                const stringValue = String(value).trim();
+                if (stringValue !== "") {
+                  newData[header].push(stringValue);
+                }
+              }
+            });
+          });
 
-        console.log("Structured Master Data:", structuredData);
-        setMasterData(structuredData);
+          // Remove duplicates and merge with existing data
+          setMasterData((prevData) => {
+            const mergedData = { ...prevData };
+
+            Object.keys(newData).forEach((key) => {
+              if (mergedData[key]) {
+                // Merge and remove duplicates
+                const combined = [...mergedData[key], ...newData[key]];
+                mergedData[key] = [...new Set(combined)];
+              } else {
+                mergedData[key] = newData[key];
+              }
+            });
+
+            return mergedData;
+          });
+
+          // Check if there's more data to load
+          setHasMore(result.pagination?.hasMore || false);
+        }
+      } catch (error) {
+        console.error("Error fetching master data:", error);
+      } finally {
+        setLoadingMaster(false);
       }
-    } catch (error) {
-      console.error("Error fetching master data:", error);
-      // You might want to add toast.error("Failed to load master data"); if you have toast setup
-    } finally {
-      setLoadingMaster(false);
+    },
+    [pageSize]
+  );
+
+  // Load more data when scrolling
+  const handleScroll = useCallback(() => {
+    if (ladingMaster || !hasMore) return;
+
+    const scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    const scrollHeight =
+      document.documentElement.scrollHeight || document.body.scrollHeight;
+    const clientHeight =
+      document.documentElement.clientHeight || window.innerHeight;
+
+    // Load more data when user is near the bottom
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      setCurrentPage((prevPage) => {
+        const nextPage = prevPage + 1;
+        fetchMasterSheet(nextPage);
+        return nextPage;
+      });
     }
-  };
+  }, [ladingMaster, hasMore, fetchMasterSheet]);
+
+  // Initial data load
+  useEffect(() => {
+    fetchMasterSheet(1);
+  }, [fetchMasterSheet]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
 
   useEffect(() => {
-    fetchMasterSheet();
     fetchPharmacySheet();
   }, []);
 
@@ -711,36 +722,6 @@ function App() {
       diagnosis: pharmacyData["Admission Purpose"]?.[admissionIndex] || "",
     };
   };
-
-  // Handle global staff selection
-  const handleGlobalStaffName = (staff) => {
-    setSelectedStaff(staff); // Store the selected staff
-    setFormState({ ...formState, staffName: staff }); // Add this line
-    setStaffSearch("");
-    setShowStaffDropdown(false);
-  };
-
-  // Handle global medicine selection
-  const handleGlobalMedicineName = (medicine) => {
-    setSelectedMedicine(medicine);
-  };
-
-  // Handle global consultant selection
-  const handleGlobalConsultantName = (consultant) => {
-    setFormState({ ...formState, consultantName: consultant }); // Add this
-    setSelectedConsultant(consultant);
-  };
-
-  // Handle global ward location selection
-  const handleGlobalWardLocation = (wardLocation) => {
-    setFormState({ ...formState, wardLocation: wardLocation }); // Add this
-    setSelectedWardLocation(wardLocation);
-  };
-
-  // const handleGlobalAdmitionNumber = (admitionNumber) => {
-  //    setFormState({ ...formState, admissionNumber: admitionNumber }); // Add this
-  //   setSelectedAdmitionNumber(admitionNumber);
-  // };
 
   const handleGlobalAdmitionNumber = (admissionNumber) => {
     setFormState({ ...formState, admissionNumber: admissionNumber });
@@ -846,10 +827,11 @@ function App() {
                   <CustomSelect
                     placeholder="Search or select admission number..."
                     value={selectedAdmitionNumber || undefined}
-                    loader = {pharmacyLoading}
+                    loader={pharmacyLoading}
                     onChange={handleGlobalAdmitionNumber}
                     options={pharmacyData["Registration Number"] || []}
                     className="w-full"
+                    pageSize={1000}
                   />
                 </div>
                 <div className="group">
@@ -863,13 +845,14 @@ function App() {
                   <CustomSelect
                     placeholder="Search or select staff..."
                     value={selectedStaff || undefined}
-                    loader = {ladingMaster}
+                    loader={ladingMaster}
                     onChange={(selectedStaff) => {
                       setSelectedStaff(selectedStaff);
                       setFormState({ ...formState, staffName: selectedStaff });
                     }}
                     options={masterData["Staff Name"] || []}
                     className="w-full"
+                    pageSize={1000} // Add this prop
                   />
                 </div>
                 <div className="group">
@@ -883,7 +866,7 @@ function App() {
                   <CustomSelect
                     placeholder="Search or select consultant..."
                     value={selectedConsultant || undefined}
-                    loader = {ladingMaster}
+                    loader={ladingMaster}
                     onChange={(selectedConsultant) => {
                       setFormState({
                         ...formState,
@@ -893,6 +876,7 @@ function App() {
                     }}
                     options={masterData["Consultant Name"] || []}
                     className="w-full"
+                    pageSize={1000} // Add this prop
                   />
                 </div>
 
@@ -983,7 +967,7 @@ function App() {
                   <CustomSelect
                     placeholder="Search or select ward location..."
                     value={selectedWardLocation || undefined}
-                    loader = {pharmacyLoading}
+                    loader={pharmacyLoading}
                     onChange={(selectedWardLocation) => {
                       setFormState({
                         ...formState,
@@ -993,6 +977,7 @@ function App() {
                     }}
                     options={pharmacyData["Ward No."] || []}
                     className="w-full"
+                    pageSize={1000}
                   />
                 </div>
               </div>
@@ -1311,8 +1296,6 @@ function App() {
                 </div>
               )}
 
-              
-
               {activeTab === "investigations" && requestTypes.investigation && (
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-4">
@@ -1339,10 +1322,11 @@ function App() {
                               Investigation Name{" "}
                               <span className="text-rose-500">*</span>
                             </label>
+
                             <CustomSelect
                               placeholder="Search or select investigation..."
                               value={investigation.name || undefined}
-                              loader = {ladingMaster}
+                              loader={ladingMaster}
                               onChange={(selectedValue) =>
                                 updateInvestigation(
                                   investigation.id,
@@ -1352,6 +1336,7 @@ function App() {
                               }
                               options={masterData["Investigation Name"] || []}
                               className="w-full"
+                              pageSize={1000} // Add this prop
                             />
                           </div>
                           <div className="md:col-span-2">
@@ -1655,12 +1640,13 @@ function App() {
                           <CustomSelect
                             placeholder="Search or select medicine..."
                             value={medicine.name || undefined}
-                            loader = {ladingMaster}
+                            loader={ladingMaster}
                             onChange={(selectedValue) =>
                               updateMedicine(medicine.id, "name", selectedValue)
                             }
                             options={masterData["Medicine Name"] || []}
                             className="w-full"
+                            pageSize={1000} // Add this prop
                           />
                         </div>
                         <div className="md:col-span-2">
@@ -2084,7 +2070,7 @@ function App() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export default App;
