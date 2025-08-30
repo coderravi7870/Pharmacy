@@ -494,6 +494,8 @@ function App() {
   const [pharmacyHasMore, setPharmacyHasMore] = useState(true);
   const pharmacyPageSize = 1000; // Number of records per page
 
+  console.log("pharmacyData", pharmacyData);
+
   const fetchPharmacySheet = useCallback(
     async (page = 1) => {
       console.log("Fetching pharmacy page:", page);
@@ -510,39 +512,43 @@ function App() {
         if (result.success && result.data && result.data.length > 0) {
           const headers = result.data[0];
           const newData = {};
+          const rowCount = result.data.length - 1; // Number of data rows
 
-          // Initialize each header with empty array
+          // Initialize each header with empty array of correct size
           headers.forEach((header) => {
-            newData[header] = [];
+            newData[header] = Array(rowCount).fill("");
           });
 
-          // Process data rows (skip header row)
-          result.data.slice(1).forEach((row) => {
-            headers.forEach((header, index) => {
-              if (index < row.length) {
-                const value = row[index];
+          // Process each row and column properly
+          result.data.slice(1).forEach((row, rowIndex) => {
+            headers.forEach((header, colIndex) => {
+              if (colIndex < row.length) {
+                const value = row[colIndex];
                 if (value !== null && value !== undefined) {
                   const stringValue = String(value).trim();
-                  newData[header].push(stringValue);
-                } else {
-                  newData[header].push("");
+                  newData[header][rowIndex] = stringValue;
                 }
-              } else {
-                // If the row doesn't have enough columns, push empty string
-                newData[header].push("");
+                // else remains as empty string (already filled)
               }
+              // else remains as empty string (already filled)
             });
           });
 
+          console.log("Processed new data with equal array sizes:", newData);
+
           // Merge with existing data
           setPharmacyData((prevData) => {
+            // If first page, replace all data
+            if (page === 1) {
+              return newData;
+            }
+
+            // For subsequent pages, merge with existing data
             const mergedData = { ...prevData };
 
             Object.keys(newData).forEach((key) => {
               if (mergedData[key]) {
-                // Merge and remove duplicates
-                const combined = [...mergedData[key], ...newData[key]];
-                mergedData[key] = [...new Set(combined)];
+                mergedData[key] = [...mergedData[key], ...newData[key]];
               } else {
                 mergedData[key] = newData[key];
               }
@@ -562,8 +568,6 @@ function App() {
     },
     [pharmacyPageSize]
   );
-
-  // Load more pharmacy data when scrolling
   const handlePharmacyScroll = useCallback(() => {
     if (pharmacyLoading || !pharmacyHasMore) return;
 
@@ -695,7 +699,6 @@ function App() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
-
 
   useEffect(() => {
     fetchPharmacySheet();
