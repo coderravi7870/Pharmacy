@@ -600,6 +600,8 @@ function App() {
     return () => window.removeEventListener("scroll", handlePharmacyScroll);
   }, [handlePharmacyScroll]);
 
+  console.log("masterDAta", masterData);
+
   const [ladingMaster, setLoadingMaster] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -979,7 +981,7 @@ function App() {
                       });
                       setSelectedWardLocation(selectedWardLocation);
                     }}
-                    options={pharmacyData["Ward No."] || []}
+                    options={masterData["Wards"] || []}
                     className="w-full"
                     pageSize={1000}
                   />
