@@ -1,6 +1,142 @@
 import React, { useState, useEffect, useCallback } from "react";
 import CustomSelect from "./utils/CustomSelect";
 
+
+const fetchLastIndentNumber = async () => {
+  try {
+    const response = await fetch(
+      "https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?action=getLastIndentNumber"
+    );
+    const result = await response.json();
+    
+    if (result.success) {
+      return result.lastIndentNumber;
+    } else {
+      console.error("Error fetching last indent number:", result.error);
+      return "IN-000"; // Fallback
+    }
+  } catch (error) {
+    console.error("Error fetching last indent number:", error);
+    return "IN-000"; // Fallback
+  }
+};
+
+// const generateIndentNumber = async () => {
+//   try {
+//     // Get the last indent number from the backend
+//     const lastIndentNumber = await fetchLastIndentNumber();
+    
+//     // Extract the numeric part and increment it
+//     const lastNumber = parseInt(lastIndentNumber.replace("IN-", ""), 10);
+//     const newNumber = lastNumber + 1;
+    
+//     // Format as IN-001, IN-002, etc.
+//     return `IN-${String(newNumber).padStart(3, '0')}`;
+//   } catch (error) {
+//     console.error("Error generating indent number:", error);
+//     // Fallback: use timestamp-based generation
+//     const date = new Date();
+//     const timestamp = date.getTime();
+//     const sequence = timestamp % 1000; // Use last 3 digits of timestamp
+//     return `IN-${String(sequence).padStart(3, '0')}`;
+//   }
+// };
+
+// const generateIndentNumber = async () => {
+//   try {
+//     // Get the last indent number from the backend
+//     const lastIndentNumber = await fetchLastIndentNumber();
+    
+//     // Extract the numeric part and increment it
+//     // Use regex to extract only the digits after "IN-"
+//     const numericPart = lastIndentNumber.replace("IN-", "");
+//     const lastNumber = parseInt(numericPart, 10);
+    
+//     if (isNaN(lastNumber)) {
+//       throw new Error("Invalid indent number format");
+//     }
+    
+//     const newNumber = lastNumber + 1;
+    
+//     // Format as IN-001, IN-002, etc.
+//     return `IN-${String(newNumber).padStart(3, '0')}`;
+//   } catch (error) {
+//     console.error("Error generating indent number:", error);
+//     // Fallback: use timestamp-based generation
+//     const date = new Date();
+//     const timestamp = date.getTime();
+//     const sequence = timestamp % 1000; // Use last 3 digits of timestamp
+//     return `IN-${String(sequence).padStart(3, '0')}`;
+//   }
+// };
+
+// function generateIndentNumber(sheet) {
+//   console.log("Checking sheet: " + sheet.getName());
+//   var lastRow = sheet.getLastRow();
+//   console.log("Last row: " + lastRow);
+
+//   if (lastRow <= 7) { // Changed from 1 to 7 since your data starts at row 8
+//     return 0; // No data yet
+//   }
+
+//   // Get all indent numbers from column F (Indent Number column)
+//   var indentNumbers = sheet.getRange(8, 6, lastRow - 7, 1).getDisplayValues(); // Changed to column 6 (F) and start row 8
+
+//   // Find the highest indent number
+//   var maxNumber = 0;
+//   for (var i = 0; i < indentNumbers.length; i++) {
+//     var cellValue = indentNumbers[i][0];
+//     if (cellValue && cellValue.toString().startsWith("IN-")) {
+//       var numPart = cellValue.toString().replace('IN-', '');
+//       var num = parseInt(numPart);
+//       if (!isNaN(num) && num > maxNumber) {
+//         maxNumber = num;
+//       }
+//     }
+//   }
+
+//   return maxNumber;
+// }
+
+const generateIndentNumber = async () => {
+  try {
+    // Get the last indent number from the backend
+    const response = await fetch(
+      "https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?action=getLastIndentNumber"
+    );
+    const result = await response.json();
+    
+    if (result.success) {
+      // Extract the numeric part and increment it
+      const numericPart = result.lastIndentNumber.replace("IN-", "");
+      const lastNumber = parseInt(numericPart, 10);
+      
+      if (isNaN(lastNumber)) {
+        throw new Error("Invalid indent number format");
+      }
+      
+      const newNumber = lastNumber + 1;
+      
+      // Format as IN-001, IN-002, etc.
+      return `IN-${String(newNumber).padStart(3, '0')}`;
+    } else {
+      console.error("Error fetching last indent number:", result.error);
+      // Fallback: use timestamp-based generation
+      const date = new Date();
+      const timestamp = date.getTime();
+      const sequence = timestamp % 1000; // Use last 3 digits of timestamp
+      return `IN-${String(sequence).padStart(3, '0')}`;
+    }
+  } catch (error) {
+    console.error("Error generating indent number:", error);
+    // Fallback: use timestamp-based generation
+    const date = new Date();
+    const timestamp = date.getTime();
+    const sequence = timestamp % 1000; // Use last 3 digits of timestamp
+    return `IN-${String(sequence).padStart(3, '0')}`;
+  }
+};
+
 function App() {
   const [medicines, setMedicines] = useState([]);
   const [investigations, setInvestigations] = useState([]);
@@ -203,20 +339,25 @@ function App() {
       prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
   };
+  
+  const [indentNumber, setIndentNumber] = useState("");
 
-  // Generate indent number
-  const generateIndentNumber = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const random = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0");
-    return `IND-${year}${month}${day}-${random}`;
+
+
+
+
+
+
+useEffect(() => {
+  const initializeIndentNumber = async () => {
+    const newIndentNumber = await generateIndentNumber();
+    setIndentNumber(newIndentNumber);
   };
+  
+  initializeIndentNumber();
+}, []);
+  // const [indentNumber] = useState(generateIndentNumber());
 
-  const [indentNumber] = useState(generateIndentNumber());
 
   const addMedicine = () => {
     const newId =
@@ -249,7 +390,12 @@ function App() {
     }
   }, [requestTypes]);
 
-  const resetForm = () => {
+  const resetForm = async () => {
+    // setIndentNumber(generateIndentNumber());
+    // Generate a new indent number first
+    const newIndentNumber = await generateIndentNumber();
+    setIndentNumber(newIndentNumber);
+
     setFormState({
       admissionNumber: "",
       staffName: "",
@@ -283,6 +429,10 @@ function App() {
     });
     setPackageItems([]);
     setNonPackageItems([]);
+
+  //   // Generate a new indent number after reset
+  // const newIndentNumber = await generateIndentNumber();
+  // setIndentNumber(newIndentNumber);
   };
 
   // Handle form submission
@@ -600,7 +750,7 @@ function App() {
     return () => window.removeEventListener("scroll", handlePharmacyScroll);
   }, [handlePharmacyScroll]);
 
-  console.log("masterDAta", masterData);
+  // console.log("masterDAta", masterData);
 
   const [ladingMaster, setLoadingMaster] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
