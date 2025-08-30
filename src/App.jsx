@@ -532,53 +532,106 @@ function App() {
 
   const [pharmacyLoading, setPharmacyLoading] = useState(false);
 
+  // const fetchPharmacySheet = async () => {
+  //   console.log("Ram");
+
+  //   setPharmacyLoading(true);
+  //   try {
+  //     const response = await fetch(
+  //       `https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?sheet=Admission%20Data`
+  //     );
+  //     const result = await response.json();
+
+  //     console.log("result", result);
+
+  //     if (result.success && result.data && result.data.length > 0) {
+  //       const headers = result.data[0];
+  //       const structuredData = {};
+
+  //       headers.forEach((header) => {
+  //         structuredData[header] = [];
+  //       });
+
+  //       result.data.slice(1).forEach((row) => {
+  //         row.forEach((value, index) => {
+  //           const header = headers[index];
+  //           if (value !== null && value !== undefined) {
+  //             const stringValue = String(value).trim();
+  //             if (stringValue !== "") {
+  //               structuredData[header].push(stringValue);
+  //             }
+  //           }
+  //         });
+  //       });
+
+  //       // Remove duplicates from each array
+  //       Object.keys(structuredData).forEach((key) => {
+  //         structuredData[key] = [...new Set(structuredData[key])];
+  //       });
+
+  //       console.log("Structured Master Data:", structuredData);
+  //       setPharmacyData(structuredData);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching master data:", error);
+  //     // You might want to add toast.error("Failed to load master data"); if you have toast setup
+  //   } finally {
+  //     setPharmacyLoading(false);
+  //   }
+  // };
+
+
+
   const fetchPharmacySheet = async () => {
-    console.log("Ram");
+  console.log("Ram");
 
-    setPharmacyLoading(true);
-    try {
-      const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?sheet=Admission%20Data`
-      );
-      const result = await response.json();
+  setPharmacyLoading(true);
+  try {
+    const response = await fetch(
+      `https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?sheet=Admission%20Data`
+    );
+    const result = await response.json();
 
-      console.log("result", result);
+    console.log("result", result);
 
-      if (result.success && result.data && result.data.length > 0) {
-        const headers = result.data[0];
-        const structuredData = {};
+    if (result.success && result.data && result.data.length > 0) {
+      const headers = result.data[0];
+      const structuredData = {};
+      const totalRows = result.data.length - 1; // Number of data rows (excluding header)
 
-        headers.forEach((header) => {
-          structuredData[header] = [];
-        });
+      // Initialize each header with an empty array
+      headers.forEach((header) => {
+        structuredData[header] = [];
+      });
 
-        result.data.slice(1).forEach((row) => {
-          row.forEach((value, index) => {
-            const header = headers[index];
+      // Process each row of data
+      result.data.slice(1).forEach((row) => {
+        headers.forEach((header, index) => {
+          if (index < row.length) {
+            const value = row[index];
             if (value !== null && value !== undefined) {
               const stringValue = String(value).trim();
-              if (stringValue !== "") {
-                structuredData[header].push(stringValue);
-              }
+              structuredData[header].push(stringValue);
+            } else {
+              structuredData[header].push('');
             }
-          });
+          } else {
+            // If the row doesn't have enough columns, push empty string
+            structuredData[header].push('');
+          }
         });
+      });
 
-        // Remove duplicates from each array
-        Object.keys(structuredData).forEach((key) => {
-          structuredData[key] = [...new Set(structuredData[key])];
-        });
-
-        console.log("Structured Master Data:", structuredData);
-        setPharmacyData(structuredData);
-      }
-    } catch (error) {
-      console.error("Error fetching master data:", error);
-      // You might want to add toast.error("Failed to load master data"); if you have toast setup
-    } finally {
-      setPharmacyLoading(false);
+      console.log("Structured Pharmacy Data:", structuredData);
+      setPharmacyData(structuredData);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching pharmacy data:", error);
+    // You might want to add toast.error("Failed to load pharmacy data"); if you have toast setup
+  } finally {
+    setPharmacyLoading(false);
+  }
+};
 
 
 
