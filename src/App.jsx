@@ -102,21 +102,17 @@ function App() {
 
     // Validate that form has required data
     if (!formState.patientName || !formState.admissionNumber) {
-      console.log(
-        "❌ Validation failed: Missing patient name or admission number"
-      );
+
       alert("Please fill in patient name and admission number first");
       return;
     }
     if (medicines.length === 0 || medicines.some((med) => !med.name)) {
-      console.log(
-        "❌ Validation failed: No medicines or incomplete medicine data"
-      );
+
       alert("Please add at least one medicine");
       return;
     }
 
-    console.log("✅ Validation passed, opening popup modal");
+
     setShowPopup(true);
   };
 
@@ -276,66 +272,77 @@ function App() {
       nonPackage: false,
     });
     setActiveTab("medicines");
+
+    setSelectedStaff("");
+    setSelectedConsultant("");
+    setSelectedWardLocation("");
+    setSelectedAdmitionNumber("");
+    setSelectedInvestigations({
+      package: [],
+      nonPackage: [],
+    });
+    setPackageItems([]);
+    setNonPackageItems([]);
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    console.log("🚀 Form submission started!", formState);
+
 
     // Validate form
     if (!formState.admissionNumber) {
-      console.log("❌ Form validation failed: Missing admission number");
+
       alert("Please enter Admission Number");
       return;
     }
     if (!formState.staffName) {
-      console.log("❌ Form validation failed: Missing staff name");
+
       alert("Please select Staff Name");
       return;
     }
     if (!formState.consultantName) {
-      console.log("❌ Form validation failed: Missing consultant name");
+
       alert("Please select Consultant Name");
       return;
     }
     if (!formState.patientName) {
-      console.log("❌ Form validation failed: Missing patient name");
+
       alert("Please enter Patient Name");
       return;
     }
     if (!formState.uhidNumber) {
-      console.log("❌ Form validation failed: Missing UHID number");
+
       alert("Please enter UHID Number");
       return;
     }
     if (!formState.age) {
-      console.log("❌ Form validation failed: Missing age");
+
       alert("Please enter Age");
       return;
     }
     if (!formState.gender) {
-      console.log("❌ Form validation failed: Missing gender");
+
       alert("Please select Gender");
       return;
     }
     if (!formState.wardLocation) {
-      console.log("❌ Form validation failed: Missing ward location");
+
       alert("Please select Ward Location");
       return;
     }
     if (!formState.category) {
-      console.log("❌ Form validation failed: Missing category");
+
       alert("Please enter Category");
       return;
     }
     if (!formState.room) {
-      console.log("❌ Form validation failed: Missing room");
+
       alert("Please enter Room");
       return;
     }
     if (!formState.diagnosis) {
-      console.log("❌ Form validation failed: Missing diagnosis");
+
       alert("Please enter Diagnosis");
       return;
     }
@@ -343,8 +350,7 @@ function App() {
     // Check if at least one request type is selected
     const hasRequestType = Object.values(requestTypes).some((value) => value);
     if (!hasRequestType) {
-      console.log("❌ Form validation failed: No request type selected");
-      console.log("Request types:", requestTypes);
+      
       alert("Please select at least one Request Type");
       return;
     }
@@ -362,27 +368,21 @@ function App() {
     const hasPrimaryRequestType =
       requestTypes.medicineSlip || requestTypes.investigation;
     if (!hasPrimaryRequestType) {
-      console.log(
-        "❌ Form validation failed: No primary request type selected"
-      );
+      
       alert("Please select at least Medicine Slip or Investigation");
       return;
     }
 
     // Check if both primary types are selected (they should be mutually exclusive)
     if (requestTypes.medicineSlip && requestTypes.investigation) {
-      console.log(
-        "❌ Form validation failed: Cannot select both Medicine Slip and Investigation"
-      );
+      
       alert("Please select only one of Medicine Slip or Investigation");
       return;
     }
 
     // Check if both package types are selected (they should be mutually exclusive)
     if (requestTypes.package && requestTypes.nonPackage) {
-      console.log(
-        "❌ Form validation failed: Cannot select both Package and Non-Package"
-      );
+
       alert("Please select only one of Package or Non-Package");
       return;
     }
@@ -393,8 +393,8 @@ function App() {
     //   return;
     // }
 
-    console.log("✅ All form validations passed!");
-    console.log("⏳ Starting form submission process...");
+    // console.log("✅ All form validations passed!");
+    // console.log("⏳ Starting form submission process...");
 
     // Set loading state
     setIsSubmitting(true);
@@ -437,7 +437,7 @@ function App() {
         // selectedInvestigations: selectedInvestigations
       };
 
-      console.log("📝 Batch data to submit:", batchData);
+      // console.log("📝 Batch data to submit:", batchData);
 
       // Send batch data to Google Sheets using your existing endpoint
       const formData = {
@@ -460,10 +460,10 @@ function App() {
       const result = await response.json();
 
       if (result.success) {
-        console.log("✅ Batch form submitted successfully to Google Sheets!");
+        // console.log("✅ Batch form submitted successfully to Google Sheets!");
         setIsSubmitting(false);
         setShowSubmitSuccess(true);
-        resetForm();
+        
       } else {
         throw new Error(result.error || "Unknown error");
       }
@@ -494,11 +494,11 @@ function App() {
   const [pharmacyHasMore, setPharmacyHasMore] = useState(true);
   const pharmacyPageSize = 1000; // Number of records per page
 
-  console.log("pharmacyData", pharmacyData);
+  // console.log("pharmacyData", pharmacyData);
 
   const fetchPharmacySheet = useCallback(
     async (page = 1) => {
-      console.log("Fetching pharmacy page:", page);
+      // console.log("Fetching pharmacy page:", page);
 
       setPharmacyLoading(true);
       try {
@@ -507,7 +507,7 @@ function App() {
         );
         const result = await response.json();
 
-        console.log("Pharmacy API Response:", result);
+        // console.log("Pharmacy API Response:", result);
 
         if (result.success && result.data && result.data.length > 0) {
           const headers = result.data[0];
@@ -534,7 +534,7 @@ function App() {
             });
           });
 
-          console.log("Processed new data with equal array sizes:", newData);
+          // console.log("Processed new data with equal array sizes:", newData);
 
           // Merge with existing data
           setPharmacyData((prevData) => {
@@ -568,6 +568,7 @@ function App() {
     },
     [pharmacyPageSize]
   );
+
   const handlePharmacyScroll = useCallback(() => {
     if (pharmacyLoading || !pharmacyHasMore) return;
 
@@ -606,7 +607,7 @@ function App() {
 
   const fetchMasterSheet = useCallback(
     async (page = 1) => {
-      console.log("Fetching page:", page);
+      // console.log("Fetching page:", page);
 
       setLoadingMaster(true);
       try {
@@ -615,7 +616,7 @@ function App() {
         );
         const result = await response.json();
 
-        console.log("API Response:", result);
+        // console.log("API Response:", result);
 
         if (result.success && result.data && result.data.length > 0) {
           const headers = result.data[0];
@@ -2008,16 +2009,16 @@ function App() {
                 </button>
                 <button
                   onClick={() => {
-                    console.log("🎯 Submit Indent button clicked from popup!");
-                    console.log("📊 Final submission data:", {
-                      indentNumber,
-                      formState,
-                      medicines: medicines.filter((med) => med.name),
-                      selectedInvestigations,
-                      requestTypes,
-                    });
+                    // console.log("🎯 Submit Indent button clicked from popup!");
+                    // console.log("📊 Final submission data:", {
+                    //   indentNumber,
+                    //   formState,
+                    //   medicines: medicines.filter((med) => med.name),
+                    //   selectedInvestigations,
+                    //   requestTypes,
+                    // });
                     alert("Indent submitted successfully!");
-                    console.log("✅ Indent submission completed!");
+                    // console.log("✅ Indent submission completed!");
                     setShowPopup(false);
                   }}
                   className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300"
@@ -2060,8 +2061,10 @@ function App() {
               <div className="flex justify-end">
                 <button
                   onClick={() => {
-                    console.log("✅ Success modal closed");
+                    // console.log("✅ Success modal closed");
                     setShowSubmitSuccess(false);
+
+                    resetForm();
                   }}
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                 >
