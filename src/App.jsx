@@ -286,9 +286,7 @@ function App() {
   const resetForm = async () => {
     // setIndentNumber(generateIndentNumber());
     // Generate a new indent number first
-    const newIndentNumber = await generateIndentNumber();
-    console.log("Generated new indent number:", newIndentNumber);
-    setIndentNumber(newIndentNumber);
+    
 
     setFormState({
       admissionNumber: "",
@@ -324,9 +322,9 @@ function App() {
     setPackageItems([]);
     setNonPackageItems([]);
 
-    //   // Generate a new indent number after reset
-    // const newIndentNumber = await generateIndentNumber();
-    // setIndentNumber(newIndentNumber);
+    const newIndentNumber = await generateIndentNumber();
+    console.log("Generated new indent number:", newIndentNumber);
+    setIndentNumber(newIndentNumber);
   };
 
   // Handle form submission
