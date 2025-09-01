@@ -1,103 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import CustomSelect from "./utils/CustomSelect";
 
-
-const fetchLastIndentNumber = async () => {
-  try {
-    const response = await fetch(
-      "https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?action=getLastIndentNumber"
-    );
-    const result = await response.json();
-    
-    if (result.success) {
-      return result.lastIndentNumber;
-    } else {
-      console.error("Error fetching last indent number:", result.error);
-      return "IN-000"; // Fallback
-    }
-  } catch (error) {
-    console.error("Error fetching last indent number:", error);
-    return "IN-000"; // Fallback
-  }
-};
-
-// const generateIndentNumber = async () => {
-//   try {
-//     // Get the last indent number from the backend
-//     const lastIndentNumber = await fetchLastIndentNumber();
-    
-//     // Extract the numeric part and increment it
-//     const lastNumber = parseInt(lastIndentNumber.replace("IN-", ""), 10);
-//     const newNumber = lastNumber + 1;
-    
-//     // Format as IN-001, IN-002, etc.
-//     return `IN-${String(newNumber).padStart(3, '0')}`;
-//   } catch (error) {
-//     console.error("Error generating indent number:", error);
-//     // Fallback: use timestamp-based generation
-//     const date = new Date();
-//     const timestamp = date.getTime();
-//     const sequence = timestamp % 1000; // Use last 3 digits of timestamp
-//     return `IN-${String(sequence).padStart(3, '0')}`;
-//   }
-// };
-
-// const generateIndentNumber = async () => {
-//   try {
-//     // Get the last indent number from the backend
-//     const lastIndentNumber = await fetchLastIndentNumber();
-    
-//     // Extract the numeric part and increment it
-//     // Use regex to extract only the digits after "IN-"
-//     const numericPart = lastIndentNumber.replace("IN-", "");
-//     const lastNumber = parseInt(numericPart, 10);
-    
-//     if (isNaN(lastNumber)) {
-//       throw new Error("Invalid indent number format");
-//     }
-    
-//     const newNumber = lastNumber + 1;
-    
-//     // Format as IN-001, IN-002, etc.
-//     return `IN-${String(newNumber).padStart(3, '0')}`;
-//   } catch (error) {
-//     console.error("Error generating indent number:", error);
-//     // Fallback: use timestamp-based generation
-//     const date = new Date();
-//     const timestamp = date.getTime();
-//     const sequence = timestamp % 1000; // Use last 3 digits of timestamp
-//     return `IN-${String(sequence).padStart(3, '0')}`;
-//   }
-// };
-
-// function generateIndentNumber(sheet) {
-//   console.log("Checking sheet: " + sheet.getName());
-//   var lastRow = sheet.getLastRow();
-//   console.log("Last row: " + lastRow);
-
-//   if (lastRow <= 7) { // Changed from 1 to 7 since your data starts at row 8
-//     return 0; // No data yet
-//   }
-
-//   // Get all indent numbers from column F (Indent Number column)
-//   var indentNumbers = sheet.getRange(8, 6, lastRow - 7, 1).getDisplayValues(); // Changed to column 6 (F) and start row 8
-
-//   // Find the highest indent number
-//   var maxNumber = 0;
-//   for (var i = 0; i < indentNumbers.length; i++) {
-//     var cellValue = indentNumbers[i][0];
-//     if (cellValue && cellValue.toString().startsWith("IN-")) {
-//       var numPart = cellValue.toString().replace('IN-', '');
-//       var num = parseInt(numPart);
-//       if (!isNaN(num) && num > maxNumber) {
-//         maxNumber = num;
-//       }
-//     }
-//   }
-
-//   return maxNumber;
-// }
-
 const generateIndentNumber = async () => {
   try {
     // Get the last indent number from the backend
@@ -105,27 +8,27 @@ const generateIndentNumber = async () => {
       "https://script.google.com/macros/s/AKfycbyfmWBK4ikZUFM5u2nYm9sVG_IlTcNNnR0yI0tCWZmh6VPQVccvV6uxK6eWigljguo4Tg/exec?action=getLastIndentNumber"
     );
     const result = await response.json();
-    
+
     if (result.success) {
       // Extract the numeric part and increment it
       const numericPart = result.lastIndentNumber.replace("IN-", "");
       const lastNumber = parseInt(numericPart, 10);
-      
+
       if (isNaN(lastNumber)) {
         throw new Error("Invalid indent number format");
       }
-      
+
       const newNumber = lastNumber + 1;
-      
+
       // Format as IN-001, IN-002, etc.
-      return `IN-${String(newNumber).padStart(3, '0')}`;
+      return `IN-${String(newNumber).padStart(3, "0")}`;
     } else {
       console.error("Error fetching last indent number:", result.error);
       // Fallback: use timestamp-based generation
       const date = new Date();
       const timestamp = date.getTime();
       const sequence = timestamp % 1000; // Use last 3 digits of timestamp
-      return `IN-${String(sequence).padStart(3, '0')}`;
+      return `IN-${String(sequence).padStart(3, "0")}`;
     }
   } catch (error) {
     console.error("Error generating indent number:", error);
@@ -133,7 +36,7 @@ const generateIndentNumber = async () => {
     const date = new Date();
     const timestamp = date.getTime();
     const sequence = timestamp % 1000; // Use last 3 digits of timestamp
-    return `IN-${String(sequence).padStart(3, '0')}`;
+    return `IN-${String(sequence).padStart(3, "0")}`;
   }
 };
 
@@ -238,16 +141,13 @@ function App() {
 
     // Validate that form has required data
     if (!formState.patientName || !formState.admissionNumber) {
-
       alert("Please fill in patient name and admission number first");
       return;
     }
     if (medicines.length === 0 || medicines.some((med) => !med.name)) {
-
       alert("Please add at least one medicine");
       return;
     }
-
 
     setShowPopup(true);
   };
@@ -314,7 +214,7 @@ function App() {
         : 1;
     setInvestigations([
       ...investigations,
-      { id: newId, name: "", quantity: 1 },
+      { id: newId, name: "", quantity: "" },
     ]);
   };
 
@@ -339,30 +239,23 @@ function App() {
       prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
   };
-  
+
   const [indentNumber, setIndentNumber] = useState("");
 
+  useEffect(() => {
+    const initializeIndentNumber = async () => {
+      const newIndentNumber = await generateIndentNumber();
+      setIndentNumber(newIndentNumber);
+    };
 
-
-
-
-
-
-useEffect(() => {
-  const initializeIndentNumber = async () => {
-    const newIndentNumber = await generateIndentNumber();
-    setIndentNumber(newIndentNumber);
-  };
-  
-  initializeIndentNumber();
-}, []);
+    initializeIndentNumber();
+  }, []);
   // const [indentNumber] = useState(generateIndentNumber());
-
 
   const addMedicine = () => {
     const newId =
       medicines.length > 0 ? Math.max(...medicines.map((m) => m.id)) + 1 : 1;
-    setMedicines([...medicines, { id: newId, name: "", quantity: 1 }]);
+    setMedicines([...medicines, { id: newId, name: "", quantity: "" }]);
   };
 
   const removeMedicine = (id) => {
@@ -394,6 +287,7 @@ useEffect(() => {
     // setIndentNumber(generateIndentNumber());
     // Generate a new indent number first
     const newIndentNumber = await generateIndentNumber();
+    console.log("Generated new indent number:", newIndentNumber);
     setIndentNumber(newIndentNumber);
 
     setFormState({
@@ -430,69 +324,57 @@ useEffect(() => {
     setPackageItems([]);
     setNonPackageItems([]);
 
-  //   // Generate a new indent number after reset
-  // const newIndentNumber = await generateIndentNumber();
-  // setIndentNumber(newIndentNumber);
+    //   // Generate a new indent number after reset
+    // const newIndentNumber = await generateIndentNumber();
+    // setIndentNumber(newIndentNumber);
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
 
-
     // Validate form
     if (!formState.admissionNumber) {
-
       alert("Please enter Admission Number");
       return;
     }
     if (!formState.staffName) {
-
       alert("Please select Staff Name");
       return;
     }
     if (!formState.consultantName) {
-
       alert("Please select Consultant Name");
       return;
     }
     if (!formState.patientName) {
-
       alert("Please enter Patient Name");
       return;
     }
     if (!formState.uhidNumber) {
-
       alert("Please enter UHID Number");
       return;
     }
     if (!formState.age) {
-
       alert("Please enter Age");
       return;
     }
     if (!formState.gender) {
-
       alert("Please select Gender");
       return;
     }
     if (!formState.wardLocation) {
-
       alert("Please select Ward Location");
       return;
     }
     if (!formState.category) {
-
       alert("Please enter Category");
       return;
     }
     if (!formState.room) {
-
       alert("Please enter Room");
       return;
     }
     if (!formState.diagnosis) {
-
       alert("Please enter Diagnosis");
       return;
     }
@@ -500,7 +382,6 @@ useEffect(() => {
     // Check if at least one request type is selected
     const hasRequestType = Object.values(requestTypes).some((value) => value);
     if (!hasRequestType) {
-      
       alert("Please select at least one Request Type");
       return;
     }
@@ -518,21 +399,18 @@ useEffect(() => {
     const hasPrimaryRequestType =
       requestTypes.medicineSlip || requestTypes.investigation;
     if (!hasPrimaryRequestType) {
-      
       alert("Please select at least Medicine Slip or Investigation");
       return;
     }
 
     // Check if both primary types are selected (they should be mutually exclusive)
     if (requestTypes.medicineSlip && requestTypes.investigation) {
-      
       alert("Please select only one of Medicine Slip or Investigation");
       return;
     }
 
     // Check if both package types are selected (they should be mutually exclusive)
     if (requestTypes.package && requestTypes.nonPackage) {
-
       alert("Please select only one of Package or Non-Package");
       return;
     }
@@ -613,7 +491,6 @@ useEffect(() => {
         // console.log("✅ Batch form submitted successfully to Google Sheets!");
         setIsSubmitting(false);
         setShowSubmitSuccess(true);
-        
       } else {
         throw new Error(result.error || "Unknown error");
       }
@@ -1147,7 +1024,7 @@ useEffect(() => {
                   >
                     Category <span className="text-rose-500">*</span>
                   </label>
-                  <div className="relative">
+                  {/* <div className="relative">
                     <input
                       type="text"
                       id="category"
@@ -1175,7 +1052,22 @@ useEffect(() => {
                         />
                       </svg>
                     </button>
-                  </div>
+                  </div> */}
+
+                  <CustomSelect
+                    placeholder="Search or select category..."
+                    value={formState.category || undefined}
+                    loader={ladingMaster}
+                    onChange={(selectedCategory) => {
+                      setFormState({
+                        ...formState,
+                        category: selectedCategory,
+                      });
+                    }}
+                    options={masterData["Category"] || []}
+                    className="w-full"
+                    pageSize={1000}
+                  />
                 </div>
                 <div className="group">
                   <label
@@ -1184,14 +1076,20 @@ useEffect(() => {
                   >
                     Room <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    id="room"
-                    name="room"
-                    value={formState.room}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-400 transition-all duration-300 font-medium"
-                  />
+                  <CustomSelect
+      placeholder="Search or select room..."
+      value={formState.room || undefined}
+      loader={ladingMaster}
+      onChange={(selectedRoom) => {
+        setFormState({
+          ...formState,
+          room: selectedRoom,
+        });
+      }}
+      options={masterData["Floor"] || []}
+      className="w-full"
+      pageSize={1000}
+    />
                 </div>
 
                 <div className="group">
@@ -1507,7 +1405,7 @@ useEffect(() => {
                                 updateInvestigation(
                                   investigation.id,
                                   "quantity",
-                                  parseInt(e.target.value) || 1
+                                  e.target.value
                                 )
                               }
                               className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400 transition-all duration-200 text-center text-sm font-medium shadow-sm"
@@ -1822,7 +1720,7 @@ useEffect(() => {
                               updateMedicine(
                                 medicine.id,
                                 "quantity",
-                                parseInt(e.target.value) || 1
+                                e.target.value
                               )
                             }
                             className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400 transition-all duration-200 text-center text-sm font-medium shadow-sm"
